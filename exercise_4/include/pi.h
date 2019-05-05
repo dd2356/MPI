@@ -1,3 +1,4 @@
+// #include <stdlib.h>
 
 
-void compute_pi(int trials, int *count, double *pi);
+void compute_pi(uint64_t trials, uint64_t *count, double *pi);

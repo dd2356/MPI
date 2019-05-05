@@ -1,15 +1,16 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include "pi.h"
+#include <stdio.h>
 #include <mpi.h>
+#include "pi.h"
 
 int main(int argc, char** argv) {
 	if (argc != 2) {
 		printf("Usage: mpirun -n <processes> bin/pi.out <trials>\n");
-		return;
+		return 0;
 	}
-	int trials = atoi(argv[1]);
-	int count = 0;
+
+	uint64_t trials = atol(argv[1]);
+	uint64_t count = 0;
 	double pi;
 
 	MPI_Init(NULL, NULL);
