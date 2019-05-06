@@ -11,7 +11,7 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	srand ( time ( NULL) * world_rank);
+	srand ( time ( NULL) * (world_rank + 1));
 	uint64_t mpi_trials = trials / world_size;
 	if (world_rank == world_size - 1) {
 		mpi_trials = trials - mpi_trials * (world_size - 1);
@@ -20,7 +20,7 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	for (uint64_t i = 0; i < mpi_trials; i++) {
 		x = (double)rand()/RAND_MAX;
 		y = (double)rand()/RAND_MAX;
-		*count += x*x + y*y < 1;
+		*count += x*x + y*y < 1.0;
 	}
 	*pi = *count / (double)trials;
 
