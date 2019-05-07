@@ -3,6 +3,8 @@
 #include <time.h>
 #include <mpi.h>
 
+#define DEBUG 0
+
 void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	double x, y;
 	uint64_t count_sum;
@@ -33,7 +35,9 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	end = clock();
 	cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 	*pi = *count / (double)trials;
-	// printf("Loop time: %.5f\n", cpu_time_used);
+	if (DEBUG) {
+		printf("Loop time: %.5f\n", cpu_time_used);
+	}
 
 	// printf("rank %2d: %6lu / %6lu = %.6f\n", 
 		// world_rank, *count, trials, *pi);
@@ -56,4 +60,5 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 		MPI_File_write_at(fh, 16 * world_size, str,
 			15, MPI_CHAR, &status);
 	}
+	MPI_File_close(&fh);
 }
