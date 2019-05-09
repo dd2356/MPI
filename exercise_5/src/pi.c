@@ -42,7 +42,7 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	// printf("rank %2d: %6lu / %6lu = %.6f\n", 
 		// world_rank, *count, trials, *pi);
 
-	char *str = (char*)malloc(16 * sizeof(char));;
+	char *str = (char*)malloc(16 * sizeof(char));
 	sprintf(str, "%5d %.6f\n", world_rank, *pi);
 
 	MPI_File_open(MPI_COMM_SELF, "results.txt", MPI_MODE_WRONLY, MPI_INFO_NULL, &fh);

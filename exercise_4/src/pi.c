@@ -35,7 +35,7 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	printf("rank %2d: %6lu / %6lu = %.6f\n", 
 		world_rank, *count, trials, *pi);
 
-	MPI_Reduce(&*count, &count_sum, 1, MPI_LONG,
+	MPI_Reduce(count, &count_sum, 1, MPI_LONG,
 		MPI_SUM, 0, MPI_COMM_WORLD);
 
 	if (world_rank == 0) {
