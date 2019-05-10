@@ -49,7 +49,7 @@ void compute_pi(uint64_t trials, uint64_t *count, double *pi) {
 	MPI_File_write_at(fh, 16 * world_rank, str,
 		16, MPI_CHAR, &status);
 
-	MPI_Reduce(&*count, &count_sum, 1, MPI_LONG,
+	MPI_Reduce(count, &count_sum, 1, MPI_LONG,
 		MPI_SUM, 0, MPI_COMM_WORLD);
 
 	if (world_rank == 0) {
