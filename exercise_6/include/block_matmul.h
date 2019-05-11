@@ -11,8 +11,10 @@
 #include <mpi.h>
 #include <cblas.h>
 
+struct Config;
+
 void init_matmul(char*, char*, char*);
-void multiply(double *A, double *B, double *C, int M, int K, int N);
+void multiply();
 void cleanup_matmul();
 void compute_fox();
 void compute_cannon();

@@ -7,7 +7,7 @@
 
 #include "block_matmul.h"
 
-void print_usage();
+void print_usage(char *program);
 
 int main(int argc, char *argv[])
 {
