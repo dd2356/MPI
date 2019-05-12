@@ -68,6 +68,8 @@ int main(int argc, char *argv[])
 	}
 
 	cleanup_matmul();
+	MPI_Barrier(MPI_COMM_WORLD);
+	printf("before finalize\n");
 	MPI_Finalize();
 
 	return 0;

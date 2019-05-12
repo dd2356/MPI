@@ -54,11 +54,11 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 		exit(1);
 	}
 
-	MPI_File_open(MPI_COMM_SELF, A_file, 
+	MPI_File_open(MPI_COMM_WORLD, A_file, 
 		MPI_MODE_RDONLY, MPI_INFO_NULL, &config.A_file);
-	MPI_File_open(MPI_COMM_SELF, B_file, 
+	MPI_File_open(MPI_COMM_WORLD, B_file, 
 		MPI_MODE_RDONLY, MPI_INFO_NULL, &config.B_file);
-	MPI_File_open(MPI_COMM_SELF, outfile, 
+	MPI_File_open(MPI_COMM_WORLD, outfile, 
 		MPI_MODE_WRONLY, MPI_INFO_NULL, &config.C_file);
 	config.block = MPI_DOUBLE;
 
@@ -90,12 +90,20 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 	config.local_dims[0] = config.A_dims[0] / config.dim[0];
 	config.local_dims[1] = config.A_dims[1] / config.dim[1];
 	config.local_size = config.local_dims[0] * config.local_dims[1];
+	printf("local dims: %d x %d\n", config.local_dims[0], config.local_dims[1]);
 
 	config.A = (double*)malloc(sizeof(double) * config.local_size);
 	config.A_tmp = (double*)malloc(sizeof(double) * config.local_size);
 	config.B = (double*)malloc(sizeof(double) * config.local_size);
 	config.B_tmp = (double*)malloc(sizeof(double) * config.local_size);
 	config.C = (double*)calloc(sizeof(double), config.local_size);
+
+	// config.A = new double[config.local_size];
+	// config.A_tmp = new double[config.local_size];
+	// config.B = new double[config.local_size];
+	// config.B_tmp = new double[config.local_size];
+	// config.C = new double[config.local_size]();
+
 
 	for (int i = 0; i < config.local_dims[0]; i++) {
 		int row_offset = i * config.A_dims[0] 
@@ -112,9 +120,13 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 			MPI_DOUBLE, MPI_STATUS_IGNORE);
 	}
 
-	// should be done with memcpy, but works for initial testing
-	config.A_tmp = &config.A[0];
-	config.B_tmp = &config.B[0];
+	for (int i = 0; i < config.local_size; i++) {
+		printf("%d: A %d: %f\n", config.world_rank, i, config.A[i]);
+	}
+
+	// make sure that A_tmp and B_tmp have the correct data to begin with (could be done with MPI)
+	memcpy(config.A_tmp, config.A, config.local_size * sizeof(double));
+	memcpy(config.B_tmp, config.B, config.local_size * sizeof(double));
 
 	/* Verify dim of A and B matches for matul and both are square*/
 
@@ -137,15 +149,19 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 	/* Collective read blocks from files */
 
 	/* Close data source files */
+	// return;
 	MPI_File_close(&config.A_file);
 	MPI_File_close(&config.B_file);
 }
 
 void cleanup_matmul()
 {
+	// return;
 	if (config.world_rank == 0) {
+		printf("cleaning up\n");
 		MPI_File_write_at(config.C_file, 0, config.C_dims,
 			2, MPI_INT, MPI_STATUS_IGNORE);
+		printf("header written!\n");
 	}
 
 	for (int i = 0; i < config.local_dims[0]; i++) {
@@ -157,16 +173,24 @@ void cleanup_matmul()
 		MPI_File_write_at(config.C_file, start_index, &config.C[i * config.local_dims[1]],
 			config.local_dims[1], MPI_DOUBLE, MPI_STATUS_IGNORE);
 	}
+	MPI_File_close(&config.C_file);
+	free(config.A);
+	free(config.A_tmp);
+	free(config.B);
+	free(config.B_tmp);
+	free(config.C);
+	printf("%d: cleanup complete!\n", config.world_rank);
+
 }
 
 // Uses the config struct exclusively, does not need any arguments
 void multiply() {
-	for (int m = 0; m < config.C_dims[0]; m++) {
-		for (int n = 0; n < config.C_dims[1]; n++) {
-			for (int k = 0; k < config.A_dims[1]; k++) {
-				config.C[m * config.C_dims[1] + n] 
-					+= config.A_tmp[m * config.A_dims[1] + k] 
-					* config.B_tmp[k * config.B_dims[1] + n];
+	for (int m = 0; m < config.local_dims[0]; m++) {
+		for (int n = 0; n < config.local_dims[1]; n++) {
+			for (int k = 0; k < config.local_dims[1]; k++) {
+				config.C[m * config.local_dims[1] + n] 
+					+= config.A_tmp[m * config.local_dims[1] + k] 
+					* config.B_tmp[k * config.local_dims[1] + n];
 			}
 		}
 	}
