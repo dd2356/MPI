@@ -69,7 +69,7 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 
 	config.C_dims[0] = config.A_dims[0]; config.C_dims[1] = config.B_dims[1];
 	config.matrix_size = config.C_dims[0] * config.C_dims[1];
-	printf("A dims: %d x %d\n", config.A_dims[0], config.A_dims[1]);
+	// printf("A dims: %d x %d\n", config.A_dims[0], config.A_dims[1]);
 
 	config.grid_comm = MPI_COMM_WORLD;
 	MPI_Comm_split(MPI_COMM_WORLD, world_rank / config.A_dims[1], 
@@ -86,6 +86,24 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 	MPI_Comm_rank(config.col_comm, &config.col_rank);
 	MPI_Comm_size(config.row_comm, &config.row_size);
 	MPI_Comm_size(config.col_comm, &config.col_size);
+
+	if (config.A_dims[0] != config.A_dims[1] 
+		|| config.B_dims[0] != config.B_dims[1]
+		|| config.C_dims[0] != config.C_dims[1]
+		|| config.A_dims[0] != config.B_dims[0]
+		|| config.A_dims[0] != config.C_dims[0]) {
+		if (config.world_rank == 0) {
+			printf("Matrices should be square and the same size\n");
+		}
+		exit(1);
+	}
+
+	if (config.A_dims[0] % config.dim[0] != 0 || config.A_dims[1] % config.dim[1] != 0) {
+		if (config.world_rank == 0) {
+			printf("Matrix not evenly divisible along grid\n");
+		}
+		exit(1);
+	}
 
 	config.local_dims[0] = config.A_dims[0] / config.dim[0];
 	config.local_dims[1] = config.A_dims[1] / config.dim[1];
