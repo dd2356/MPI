@@ -308,8 +308,8 @@ void compute_fox()
     MPI_Status status;
     int root, source, dest; 
 	/* Compute source and target for verticle shift of B blocks */
-    source = (config.row_rank + 1) % config.dim[0]; 
-    dest = (config.row_rank + config.dim[0] -1) % config.dim[0]; 
+    source = (config.col_rank + 1) % config.dim[0]; 
+    dest = (config.col_rank + config.dim[0] -1) % config.dim[0]; 
 
 	for (int i = 0; i < config.dim[0]; i++) {
 		/* Diag + i broadcast block A horizontally and use A_tmp to preserve own local A */
@@ -324,8 +324,10 @@ void compute_fox()
         /* reset A from tmp */
         memcpy(config.A,config.A_tmp,sizeof(double)*config.local_size); 
 
+        printf("[ %d ] Source:%d Destination:%d\n",config.world_rank, source, dest); 
 		/* Shfting block B upwards and receive from process below */
         memcpy(config.B_tmp,config.B,sizeof(double)*config.local_size); 
+
         MPI_Sendrecv_replace(
                 config.B_tmp,
                 config.local_size,
@@ -337,6 +339,5 @@ void compute_fox()
                 config.col_comm,
                 &status);	
         memcpy(config.B,config.B_tmp,sizeof(double)*config.local_size); 
-
 	}
 }
