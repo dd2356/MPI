@@ -12,7 +12,7 @@ struct Config {
 	MPI_Datatype block;
 
 	/* Matrix data */
-	double *A, *A_tmp, *B, *C;
+	double *A, *A_tmp, *B, *B_tmp, *C;
 
 	/* Cart communicators */
 	MPI_Comm grid_comm;
@@ -146,7 +146,7 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 	config.A = (double*)malloc(sizeof(double) * config.local_size);
 	config.A_tmp = (double*)malloc(sizeof(double) * config.local_size);
 	config.B = (double*)malloc(sizeof(double) * config.local_size);
-	// config.B_tmp = (double*)malloc(sizeof(double) * config.local_size);
+	config.B_tmp = (double*)malloc(sizeof(double) * config.local_size);
 	config.C = (double*)calloc(sizeof(double), config.local_size);
 
 	/* Set fileview of process to respective matrix block */
@@ -170,9 +170,9 @@ void init_matmul(char *A_file, char *B_file, char *outfile)
 		printf("Finished reading files\n"); 
 	}
 	
-	// for (int i = 0; i < config.local_size; i++) {
+	for (int i = 0; i < config.local_size; i++) {
 		//printf("%d: A %d: %f\n", config.world_rank, i, config.A[i]);
-	// }
+	}
 
 	/* Close data source files */
 	// return;
@@ -265,10 +265,10 @@ void cleanup_matmul()
 {
 	// return;
 	if (config.world_rank == 0) {
-		// printf("cleaning up\n");
+		printf("cleaning up\n");
 		MPI_File_write_at(config.C_file, 0, config.C_dims,
 			2, MPI_INT, MPI_STATUS_IGNORE);
-		// printf("header written!\n");
+		printf("header written!\n");
 	}
 
 	for (int i = 0; i < config.local_dims[0]; i++) {
@@ -284,9 +284,9 @@ void cleanup_matmul()
 	free(config.A);
 	free(config.A_tmp);
 	free(config.B);
-	// free(config.B_tmp);
+	free(config.B_tmp);
 	free(config.C);
-	// printf("%d: cleanup complete!\n", config.world_rank);
+	printf("%d: cleanup complete!\n", config.world_rank);
 
 }
 
@@ -323,23 +323,22 @@ void compute_fox()
 		multiply();
 
 		/* reset A from tmp */
-		// memcpy(config.A,config.A_tmp,sizeof(double)*config.local_size); 
+		memcpy(config.A,config.A_tmp,sizeof(double)*config.local_size); 
 
-		// printf("[ %d ] Source:%d Destination:%d\n",config.world_rank, source, dest); 
+		printf("[ %d ] Source:%d Destination:%d\n",config.world_rank, source, dest); 
 		/* Shfting block B upwards and receive from process below */
-		// memcpy(config.B_tmp,config.B,sizeof(double)*config.local_size); 
+		memcpy(config.B_tmp,config.B,sizeof(double)*config.local_size); 
 
 		MPI_Sendrecv_replace(
-			config.B,
-			config.local_size,
-			config.block,
-			dest,
-			0,
-			source,
-			0,
-			config.col_comm,
-			&status
-		);	
-		// memcpy(config.B,config.B_tmp,sizeof(double)*config.local_size); 
+				config.B_tmp,
+				config.local_size,
+				config.block,
+				dest,
+				0,
+				source,
+				0,
+				config.col_comm,
+				&status);	
+		memcpy(config.B,config.B_tmp,sizeof(double)*config.local_size); 
 	}
 }
